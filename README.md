@@ -1,4 +1,6 @@
-# vCard - Personal portfolio
+Thanks to codewithsadee for the MIT-licensed template. · License
+
+<!-- # vCard - Personal portfolio
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/codewithsadee/vcard-personal-portfolio)
 ![GitHub stars](https://img.shields.io/github/stars/codewithsadee/vcard-personal-portfolio?style=social)
@@ -41,4 +43,4 @@ If you want to contact me you can reach me at [Twitter](https://www.x.com/codewi
 
 ## License
 
-MIT
+MIT -->
