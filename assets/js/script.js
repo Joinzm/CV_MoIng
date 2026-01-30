@@ -229,25 +229,16 @@ function activatePage(pageName, options = { updateURL: true, push: true }) {
   const target = norm(pageName);
   if (!target) return;
 
-  let matched = false;
+  // 1) 切页面
+  pages.forEach((p) => {
+    p.classList.toggle("active", (p.dataset.page || "").trim() === target);
+  });
 
-  for (let i = 0; i < pages.length; i++) {
-    const pageKey = norm(pages[i].dataset.page);
-
-    const isActive = target === pageKey;
-    pages[i].classList.toggle("active", isActive);
-
-    // ⚠️ 你这里假设 pages 和 navigationLinks 数量/顺序一致
-    // 为稳一点，加个存在判断
-    if (navigationLinks[i]) {
-      navigationLinks[i].classList.toggle("active", isActive);
-    }
-
-    if (isActive) matched = true;
-  }
-
-  // 如果没匹配到，什么都不做（避免把所有页面都隐藏）
-  if (!matched) return;
+  // 2) 高亮导航：按“名字”匹配，而不是按 index
+  navigationLinks.forEach((link) => {
+    const linkKey = (link.dataset.page || link.textContent || "").trim();
+    link.classList.toggle("active", linkKey === target);
+  });
 
   window.scrollTo(0, 0);
 
@@ -302,12 +293,12 @@ window.addEventListener("popstate", function () {
 });
 
 // 为所有导航链接添加点击事件
-for (let i = 0; i < navigationLinks.length; i++) {
-  navigationLinks[i].addEventListener("click", function () {
-    const pageName = this.dataset.page || (this.textContent || "").trim();
+navigationLinks.forEach((link) => {
+  link.addEventListener("click", () => {
+    const pageName = link.dataset.page || (link.textContent || "").trim();
     activatePage(pageName, { updateURL: true, push: true });
   });
-}
+});
 
 fetch(new URL("timeline.yaml", window.location.href))
   .then((res) => {
@@ -385,7 +376,7 @@ fetch(new URL("timeline.yaml", window.location.href))
       const sub = $("p.project-subtitle", node);
       const cat = $("p.project-category", node);
 
-      // 用于筛选的 key（建议 YAML 里就写：科研项目 / 工程开发 / 全部）
+      // 用于筛选的 key
       li.dataset.category = norm(p.category) || "";
 
       a.href = p.link || "#";
