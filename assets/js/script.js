@@ -358,14 +358,24 @@ fetch(new URL("timeline.yaml", window.location.href))
   // 可选：如果你页面里有下拉筛选，这里也会兼容
   const select = $("[data-select]");
   const selectValue = $("[data-select-value]");
+
   // const toggleSelect = () => select && select.classList.toggle("active");
+
+  // function toggleSelect(e) {
+  //   // 只拦截“点头部”的点击，避免影响选项点击冒泡到 document
+  //   e.stopPropagation();
+  //   select.classList.toggle("active");
+  // }
   function toggleSelect(e) {
-    // 只拦截“点头部”的点击，避免影响选项点击冒泡到 document
-    e.stopPropagation();
+    e.preventDefault(); // 防止 button 默认行为影响点击
+    if (!select) return;
     select.classList.toggle("active");
   }
-  // 只给“头部”绑定 toggle（而不是整个 select 容器）
-  if (selectValue) selectValue.addEventListener("click", toggleSelect);
+
+  // // 只给“头部”绑定 toggle（而不是整个 select 容器）
+  // if (selectValue) selectValue.addEventListener("click", toggleSelect);
+
+  if (select) select.addEventListener("click", toggleSelect);
 
   let projects = [];
 
@@ -437,7 +447,8 @@ fetch(new URL("timeline.yaml", window.location.href))
       if (opt) {
         if (selectValue) selectValue.textContent = selected;
         // if (select) toggleSelect();
-        if (select) select.classList.remove("active");
+        if (select) select.classList.remove("active"); // 收起
+        select.classList.add("selected"); // 选中后保持加粗
       }
 
       applyFilter(selected);

@@ -979,7 +979,9 @@ main {
   visibility: visible;
   pointer-events: all;
 }
-
+.filter-select.selected [data-select-value] {
+  font-weight: 700;
+}
 .select-item button {
   background: var(--eerie-black-2);
   color: var(--light-gray);
