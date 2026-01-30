@@ -414,32 +414,36 @@ fetch(new URL("timeline.yaml", window.location.href))
   }
 
   // 事件委托：只在 .projects 区域内响应（避免跨页面误触发）
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".projects")) return;
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!e.target.closest(".projects")) return;
 
-    const btn = e.target.closest("[data-filter-btn]");
-    const opt = e.target.closest("[data-select-item]");
-    if (!btn && !opt) return;
+      const btn = e.target.closest("[data-filter-btn]");
+      const opt = e.target.closest("[data-select-item]");
+      if (!btn && !opt) return;
 
-    const selected =
-      norm((btn || opt).dataset.category) || norm((btn || opt).textContent);
+      const selected =
+        norm((btn || opt).dataset.category) || norm((btn || opt).textContent);
 
-    // 按钮高亮
-    if (btn) {
-      $$("[data-filter-btn]").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      if (selectValue) selectValue.textContent = selected;
-    }
+      // 按钮高亮
+      if (btn) {
+        $$("[data-filter-btn]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (selectValue) selectValue.textContent = selected;
+      }
 
-    // 下拉选项
-    if (opt) {
-      if (selectValue) selectValue.textContent = selected;
-      // if (select) toggleSelect();
-      if (select) select.classList.remove("active");
-    }
+      // 下拉选项
+      if (opt) {
+        if (selectValue) selectValue.textContent = selected;
+        // if (select) toggleSelect();
+        if (select) select.classList.remove("active");
+      }
 
-    applyFilter(selected);
-  });
+      applyFilter(selected);
+    },
+    true
+  );
 
   // // 下拉开关
   // if (select) select.addEventListener("click", toggleSelect);
