@@ -87,9 +87,9 @@ if (modalCloseBtn)
 if (overlay) overlay.addEventListener("click", testimonialsModalFunc);
 
 // custom select variables
-const select = document.querySelector("[data-select]");
+// const select = document.querySelector("[data-select]");
 // const selectItems = document.querySelectorAll("[data-select-item]");
-const selectValue = document.querySelector("[data-selecct-value]");
+// const selectValue = document.querySelector("[data-select-value]");
 // const filterBtn = document.querySelectorAll("[data-filter-btn]");
 
 // select.addEventListener("click", function () {
@@ -357,12 +357,15 @@ fetch(new URL("timeline.yaml", window.location.href))
 
   // 可选：如果你页面里有下拉筛选，这里也会兼容
   const select = $("[data-select]");
-  const selectValue = $("[data-selecct-value]"); // 注意你 HTML 是 selecct 双 c
+  const selectValue = $("[data-select-value]");
   // const toggleSelect = () => select && select.classList.toggle("active");
-  const toggleSelect = (e) => {
-    if (e) e.stopPropagation();
-    if (select) select.classList.toggle("active");
-  };
+  function toggleSelect(e) {
+    // 只拦截“点头部”的点击，避免影响选项点击冒泡到 document
+    e.stopPropagation();
+    select.classList.toggle("active");
+  }
+  // 只给“头部”绑定 toggle（而不是整个 select 容器）
+  if (selectValue) selectValue.addEventListener("click", toggleSelect);
 
   let projects = [];
 
@@ -438,8 +441,8 @@ fetch(new URL("timeline.yaml", window.location.href))
     applyFilter(selected);
   });
 
-  // 下拉开关
-  if (select) select.addEventListener("click", toggleSelect);
+  // // 下拉开关
+  // if (select) select.addEventListener("click", toggleSelect);
 
   // 加载 YAML 并渲染
   list.innerHTML = `<li class="project-item active" data-filter-item data-category="全部">
