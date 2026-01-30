@@ -309,23 +309,30 @@ for (let i = 0; i < navigationLinks.length; i++) {
   });
 }
 
-fetch("./timeline.yaml")
-  .then((res) => res.text())
+fetch(new URL("timeline.yaml", window.location.href))
+  .then((res) => {
+    if (!res.ok)
+      throw new Error(`HTTP ${res.status} ${res.statusText} (${res.url})`);
+    return res.text();
+  })
   .then((yamlText) => {
+    if (!window.jsyaml) throw new Error("jsyaml is not loaded");
+
     const data = jsyaml.load(yamlText);
     const container = document.getElementById("timeline");
+    if (!container) return;
 
-    container.innerHTML = data.timeline
-      // 按年倒序，双保险
+    const items = (data && data.timeline) || [];
+
+    container.innerHTML = items
       .sort((a, b) => Number(b.year) - Number(a.year))
       .map(
         (item) => `
           <li class="timeline-item" data-year="${item.year}">
             <h4 class="h4 timeline-item-title">${item.year}</h4>
-
             <ul class="timeline-sublist">
-              ${item.title
-                .map((award) => `<li class="timeline-text">${award}</li>`)
+              ${(item.title || [])
+                .map((t) => `<li class="timeline-text">${t}</li>`)
                 .join("")}
             </ul>
           </li>
@@ -335,10 +342,19 @@ fetch("./timeline.yaml")
   })
   .catch((err) => {
     console.error("Failed to load timeline.yaml", err);
+    const container = document.getElementById("timeline");
+    if (container) {
+      container.innerHTML = `<li class="timeline-item active"><p class="timeline-text">Failed: ${String(
+        err.message || err
+      )}</p></li>`;
+    }
   });
 
 (() => {
-  const PROJECTS_YAML = "./projects.yaml";
+  const PROJECTS_YAML = new URL(
+    "projects.yaml",
+    window.location.href
+  ).toString();
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
