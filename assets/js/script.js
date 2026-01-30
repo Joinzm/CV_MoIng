@@ -342,32 +342,47 @@ fetch("./timeline.yaml")
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const norm = (s) => (s || "").trim(); // 中文不需要 toLowerCase，保持原样更稳
 
-  function renderProjects(projects) {
-    const list = $("#project-list");
-    const tpl = $("#project-item-template");
-    if (!list || !tpl) return;
+  const list = $("#project-list");
+  const tpl = $("#project-item-template");
+  if (!list || !tpl) return;
 
+  // 可选：如果你页面里有下拉筛选，这里也会兼容
+  const select = $("[data-select]");
+  const selectValue = $("[data-selecct-value]"); // 注意你 HTML 是 selecct 双 c
+  const toggleSelect = () => select && select.classList.toggle("active");
+
+  let projects = [];
+
+  function render(projectsArr) {
     list.innerHTML = "";
     const frag = document.createDocumentFragment();
 
-    projects.forEach((p) => {
+    projectsArr.forEach((p) => {
       const node = tpl.content.cloneNode(true);
 
       const li = $("li.project-item", node);
       const a = $("a.project-link", node);
       const img = $("img.project-thumb", node);
       const title = $("h3.project-title", node);
-      const cat = $("p.project-category", node);
       const sub = $("p.project-subtitle", node);
+      const cat = $("p.project-category", node);
 
-      li.dataset.category = p.category || "";
+      // 用于筛选的 key（建议 YAML 里就写：科研项目 / 工程开发 / 全部）
+      li.dataset.category = norm(p.category) || "";
+
       a.href = p.link || "#";
       img.src = p.image || "";
       img.alt = p.alt || p.title || "";
+
       title.textContent = p.title || "";
+      if (sub) {
+        const st = norm(p.subtitle);
+        sub.textContent = st;
+        sub.style.display = st ? "" : "none";
+      }
       cat.textContent = p.categoryLabel || p.category || "";
-      sub.textContent = p.subtitle || "";
 
       frag.appendChild(node);
     });
@@ -375,48 +390,66 @@ fetch("./timeline.yaml")
     list.appendChild(frag);
   }
 
+  function applyFilter(selected) {
+    const key = norm(selected) || "全部";
+    $$("[data-filter-item]", list).forEach((item) => {
+      const itemCat = norm(item.dataset.category);
+      const show = key === "全部" || itemCat === key;
+      item.classList.toggle("active", show);
+    });
+  }
+
+  // 事件委托：只在 .projects 区域内响应（避免跨页面误触发）
   document.addEventListener("click", (e) => {
-    const filterBtn = e.target.closest("[data-filter-btn]");
-    const selectItem = e.target.closest("[data-select-item]");
-    const trigger = filterBtn || selectItem;
-    if (!trigger) return;
+    if (!e.target.closest(".projects")) return;
 
-    const category = (
-      trigger.dataset.category || (trigger.textContent || "").trim()
-    ).toLowerCase();
+    const btn = e.target.closest("[data-filter-btn]");
+    const opt = e.target.closest("[data-select-item]");
+    if (!btn && !opt) return;
 
-    // 这里补：如果点的是下拉选项，更新 selectValue + 收起下拉
-    if (selectItem) {
-      if (selectValue)
-        selectValue.textContent = (selectItem.textContent || "").trim();
-      if (select) elementToggleFunc(select); // 收起下拉
-    }
+    const selected =
+      norm((btn || opt).dataset.category) || norm((btn || opt).textContent);
 
-    // 这里保留：如果点的是 filterBtn，更新按钮 active（高亮）
-    if (filterBtn) {
+    // 按钮高亮
+    if (btn) {
       $$("[data-filter-btn]").forEach((b) => b.classList.remove("active"));
-      filterBtn.classList.add("active");
-
-      // 可选：同步 selectValue（让移动端显示也一致）
-      if (selectValue)
-        selectValue.textContent = (filterBtn.textContent || "").trim();
+      btn.classList.add("active");
+      if (selectValue) selectValue.textContent = selected;
     }
 
-    filterFunc(category);
+    // 下拉选项：更新显示并收起
+    if (opt) {
+      if (selectValue) selectValue.textContent = selected;
+      if (select) toggleSelect();
+    }
+
+    applyFilter(selected);
   });
 
-  // 加载 YAML 并渲染
-  fetch(PROJECTS_YAML)
-    .then((res) => res.text())
-    .then((yamlText) => {
-      const data = jsyaml.load(yamlText);
-      const projects = (data && data.projects) || [];
-      renderProjects(projects);
-      filterItems = document.querySelectorAll("[data-filter-item]");
+  // 下拉开关（如果存在）
+  if (select) select.addEventListener("click", toggleSelect);
 
-      filterFunc("全部"); // 初始显示全部
+  // 加载 YAML 并渲染
+  list.innerHTML = `<li class="project-item active" data-filter-item data-category="全部">
+      <a class="project-link" href="javascript:void(0)"><h3 class="project-title">Loading...</h3></a>
+    </li>`;
+
+  fetch(PROJECTS_YAML)
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+      return res.text();
+    })
+    .then((yamlText) => {
+      if (!window.jsyaml) throw new Error("jsyaml is not loaded");
+      const data = jsyaml.load(yamlText);
+      projects = (data && data.projects) || [];
+      render(projects);
+      requestAnimationFrame(() => applyFilter("全部"));
     })
     .catch((err) => {
       console.error("Load projects.yaml failed:", err);
+      list.innerHTML = `<li class="project-item active" data-filter-item data-category="全部">
+          <a class="project-link" href="javascript:void(0)"><h3 class="project-title">Failed to load projects.</h3></a>
+        </li>`;
     });
 })();
