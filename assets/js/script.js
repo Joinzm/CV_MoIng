@@ -95,11 +95,11 @@ const selectValue = document.querySelector("[data-selecct-value]");
 // select.addEventListener("click", function () {
 //   elementToggleFunc(this);
 // });
-if (select) {
-  select.addEventListener("click", function () {
-    elementToggleFunc(this);
-  });
-}
+// if (select) {
+//   select.addEventListener("click", function () {
+//     elementToggleFunc(this);
+//   });
+// }
 // add event in all select items
 // for (let i = 0; i < selectItems.length; i++) {
 //   selectItems[i].addEventListener("click", function () {
@@ -358,7 +358,11 @@ fetch(new URL("timeline.yaml", window.location.href))
   // 可选：如果你页面里有下拉筛选，这里也会兼容
   const select = $("[data-select]");
   const selectValue = $("[data-selecct-value]"); // 注意你 HTML 是 selecct 双 c
-  const toggleSelect = () => select && select.classList.toggle("active");
+  // const toggleSelect = () => select && select.classList.toggle("active");
+  const toggleSelect = (e) => {
+    if (e) e.stopPropagation();
+    if (select) select.classList.toggle("active");
+  };
 
   let projects = [];
 
@@ -424,16 +428,17 @@ fetch(new URL("timeline.yaml", window.location.href))
       if (selectValue) selectValue.textContent = selected;
     }
 
-    // 下拉选项：更新显示并收起
+    // 下拉选项
     if (opt) {
       if (selectValue) selectValue.textContent = selected;
-      if (select) toggleSelect();
+      // if (select) toggleSelect();
+      if (select) select.classList.remove("active");
     }
 
     applyFilter(selected);
   });
 
-  // 下拉开关（如果存在）
+  // 下拉开关
   if (select) select.addEventListener("click", toggleSelect);
 
   // 加载 YAML 并渲染
